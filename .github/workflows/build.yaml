@@ -1,0 +1,73 @@
+name: Build and publish images
+
+# we build images only on MR or release tag created to save disk space in registry
+on:
+  push:
+    tags: [v*]
+  pull_request:
+    branches: [main]
+
+permissions:
+  packages: write
+  attestations: write
+  contents: read
+
+env:
+  IMAGE_NAME: ghcr.io/prudnitskiy/nco-sre-challenge
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Scan Dockerfile
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: dockerfile
+          skip_check: CKV_DOCKER_2
+          quiet: true
+
+      - name: Build Image for security scan
+        run: docker build -t "${{ env.IMAGE_NAME }}:${{ github.sha }}" .
+
+      - name: Scan Image
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          image-ref: "${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+      # This setup allows to have reproducable builds but with the cost of disk use. Consider to use housekeeping
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,event=event=pr
+            type=semver,pattern={{version}}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          sbom: true
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          platforms: linux/amd64,linux/arm64
