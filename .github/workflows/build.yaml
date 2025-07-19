@@ -30,10 +30,18 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Build an image from Dockerfile
+      - name: Scan Dockerfile
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: dockerfile
+          skip_check: CKV_DOCKER_2
+          quiet: true
+
+      - name: Build Image for security scan
         run: docker build -t "${{ env.IMAGE_NAME }}:${{ github.sha }}" .
 
       - name: Scan Image
