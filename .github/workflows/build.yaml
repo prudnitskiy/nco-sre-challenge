@@ -53,6 +53,7 @@ jobs:
           vuln-type: "os,library"
           severity: "CRITICAL,HIGH"
 
+      # This setup allows to have reproducable builds but with the cost of disk use. Consider to use housekeeping
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -60,6 +61,7 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
+            type=sha,event=event=pr
             type=semver,pattern={{version}}
 
       - name: Build and push image
