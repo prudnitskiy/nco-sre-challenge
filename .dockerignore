@@ -32,5 +32,6 @@
 **/values.dev.yaml
 .github/
 chart/
+terraform/
 LICENSE
 README.md

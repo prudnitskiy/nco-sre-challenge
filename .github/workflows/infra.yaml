@@ -1,0 +1,26 @@
+name: Infrastructure setup
+
+on:
+  push:
+    tags: [v*]
+    branches: ["feature/k8s"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Validate Helm chart
+        run: helm lint ./chart/app
+
+      - name: Scan Helm chart for issues
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./chart/app
+          framework: helm
+          soft_fail: true
+          quiet: true
