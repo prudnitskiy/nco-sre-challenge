@@ -30,12 +30,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build image for tests
-        uses: docker/build-push-action@v6
-        with:
-          sbom: true
-          push: false
-          tags: "${{ github.sha }}"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build an image from Dockerfile
+        run: docker build -t "${{ env.IMAGE_NAME }}:${{ github.sha }}" .
 
       - name: Scan Image
         uses: aquasecurity/trivy-action@0.32.0
