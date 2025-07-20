@@ -3,6 +3,8 @@ name: Infrastructure setup
 on:
   push:
     tags: [v*]
+  pull_request:
+    branches: [main]
 
 permissions:
   id-token: write
@@ -131,3 +133,14 @@ jobs:
       # Terraform Apply
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
+
+      - name: Rollback failed
+        if: failure()
+        run: |
+          # This is a placehoder for rollback logic
+          # We need to keep a last known good config and pull it in case of failure
+          # Helm rollback won't work here, it will cause config drift
+          # Optional SRE team notification needed here
+          echo "Apply failed, but old version still running"
+          echo "getting LKGC tag"
+          echo "applying terraform with LKGC tag"

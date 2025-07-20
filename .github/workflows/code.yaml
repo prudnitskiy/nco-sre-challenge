@@ -1,9 +1,6 @@
-name: Python Tests
+name: Code Tests on Push
 
-on:
-  push:
-    branches-ignore:
-      - "feature/k8s"
+on: [push]
 
 env:
   PYTHON_VERSION: "3.13.5"
