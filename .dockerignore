@@ -33,5 +33,6 @@
 .github/
 chart/
 terraform/
+alertscan/
 LICENSE
 README.md
