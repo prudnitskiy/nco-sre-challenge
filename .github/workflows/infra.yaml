@@ -40,11 +40,6 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: "Run az commands"
-        run: |
-          az account show
-          az group list
-
       - name: Checkout Code
         uses: actions/checkout@v4
 
@@ -53,10 +48,21 @@ jobs:
         with:
           directory: ./terraform
 
-      - name: Scan Terraform configuration for issues
+      - name: Scan terraform for issues
         uses: bridgecrewio/checkov-action@master
         with:
           directory: ./terraform
           framework: terraform
           soft_fail: true
           quiet: true
+
+      - name: Configure Kubeconfig
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Plan Terraform changes
+        uses: dflook/terraform-plan@v2
+        with:
+          path: ./terraform
