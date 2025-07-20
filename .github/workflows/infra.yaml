@@ -57,9 +57,6 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
 
-      - name: Explicitely set kubeconfig var for TF
-        run: export TF_VAR_kubernetes_config_path=$KUBECONFIG
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -76,6 +73,10 @@ jobs:
       - name: Terraform Plan
         id: tf-plan
         run: |
+          export TF_VAR_kubernetes_config_path=$KUBECONFIG
+
+          env
+
           export exitcode=0
           terraform plan -detailed-exitcode -no-color -out tfplan || export exitcode=$?
 
