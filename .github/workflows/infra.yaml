@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
+  terraform-plan:
     runs-on: ubuntu-latest
     environment: dev
     steps:
@@ -21,21 +21,20 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Configure Kubeconfig
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_wrapper: false
-
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
       - name: Terraform Plan
         id: tf-plan
         run: |
@@ -61,8 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: tfplan
-
+          path: terraform/tfplan
       # Create string output of Terraform Plan
       - name: Create String Output
         id: tf-plan-string
@@ -79,7 +77,7 @@ jobs:
           echo '```' >> $GITHUB_OUTPUT
           echo "</details>" >> $GITHUB_OUTPUT
           echo "${delimiter}" >> $GITHUB_OUTPUT
-
+        working-directory: ./terraform
       # Publish Terraform Plan as task summary
       - name: Publish Terraform Plan to Task Summary
         env:
@@ -115,25 +113,22 @@ jobs:
       # Checkout the repository to the GitHub Actions runner
       - name: Checkout
         uses: actions/checkout@v4
-
       # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
       # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
       - name: Terraform Init
         run: terraform init
-
+        working-directory: terraform
       # Download saved plan from artifacts
       - name: Download Terraform Plan
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-
       # Terraform Apply
       - name: Terraform Apply
         run: terraform apply -auto-approve tfplan
-
+        working-directory: terraform
       - name: Rollback failed
         if: failure()
         run: |
