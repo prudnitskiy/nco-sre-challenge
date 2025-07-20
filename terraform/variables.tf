@@ -1,3 +1,9 @@
+variable "kubernetes_config_path" {
+  type        = string
+  default     = "~/.kube/config"
+  description = "Path to Kubernetes config file"
+}
+
 variable "kubernetes_context" {
   type        = string
   default     = "default"
