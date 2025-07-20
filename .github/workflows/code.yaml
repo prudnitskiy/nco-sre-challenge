@@ -9,7 +9,7 @@ env:
   PYTHON_VERSION: "3.13.5"
 
 jobs:
-  build:
+  python:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,3 +25,58 @@ jobs:
           pip install pytest
       - name: Run tests
         run: pytest
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Scan Dockerfile
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: dockerfile
+          skip_check: CKV_DOCKER_2
+          quiet: true
+
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - name: Terraform Init
+        run: terraform init -backend=false
+        working-directory: ./terraform
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: ./terraform
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+        working-directory: ./terraform
+      - name: Scan terraform for issues
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./terraform
+          framework: terraform
+          soft_fail: true
+          quiet: true
+
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Validate Helm chart
+        run: helm lint ./chart/app
+      - name: Scan Helm chart for issues
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: ./chart/app
+          framework: helm
+          soft_fail: true
+          quiet: true
